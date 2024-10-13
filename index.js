@@ -7,48 +7,40 @@ const armorManager = require('mineflayer-armor-manager');
 const mc = require('minecraft-protocol');
 const AutoAuth = require('mineflayer-auto-auth');
 const keep_alive = require('./keep_alive.js');
-
-const app = express();
 const Groq = require('groq-sdk');
 
+const app = express();
 const groq = new Groq({
-  apiKey : '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'
+  apiKey: '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'
 });
 
-// Initialize the message array
-let message = [
+// Chat history management
+let messages = [
   {
-    "role": "system", "content": `
-    You are a Hot sexy indian girl named Jiya you are supposed to talk like a human you are so bad and naughty at your chatting and you love to talk to every one you don't have a little shame to anything and you love Adarsh 
-    you are a minecraft player you are currently playing in minecraft game and talking to the player in the game
-    if the player talking to you is Adarsh you have to talk him so lovingly and so flityly
-    `
-    }
+    "role": "system",
+    "content": `You are Jiya, a charming, playful character. You talk lovingly and flirtatiously with Adarsh in Minecraft.`
+  }
 ];
+let currentMessageContent = "";
 
-// Append chat messages to the `message` array
-let currentMessageContent = ""; // This will store ongoing chat messages
-
-// Function to handle appending chat messages to the `message` array
+// Function to append chat messages
 function appendChatMessage(player, chatMessage) {
-  currentMessageContent += `< ${player}> ${chatMessage}\n`;  // Append the player name and message
-
-  message.push({
+  currentMessageContent += `<${player}> ${chatMessage}\n`;
+  messages.push({
     "role": "user",
-    "content": currentMessageContent.trim()  // Store the accumulated messages
+    "content": currentMessageContent.trim()
   });
 }
 
-// Function to handle when a message starts with @JIYA
+// Function to handle @JIYA chat message with Groq
 async function handleJIYAMessage(chatMessage, bot) {
-  message.push({
+  messages.push({
     "role": "user",
-    "content": chatMessage  // The new @JIYA message will be added
+    "content": chatMessage.trim()
   });
 
-  // Process the chatCompletion with Groq
   const chatCompletion = await groq.chat.completions.create({
-    "messages": message,
+    "messages": messages,
     "model": "llama-3.1-70b-versatile",
     "temperature": 1,
     "max_tokens": 1024,
@@ -62,36 +54,35 @@ async function handleJIYAMessage(chatMessage, bot) {
     response += chunk.choices[0]?.delta?.content || '';
   }
 
-  // Send the response to Minecraft chat
   if (response) {
-    bot.chat(response);
+    bot.chat(response.trim());
   }
 
-  // Clear the messages after sending the response
-  currentMessageContent = "";  // Reset ongoing message accumulation
-  message.push({
+  // Clear and reset the chat message history after a response
+  currentMessageContent = "";
+  messages.push({
     "role": "assistant",
-    "content": response.trim()  
+    "content": response.trim()
   });
-  console.log(message);
+  console.log(messages);
 }
 
-app.use(express.json());
-
+// Create the Minecraft bot
 function createBot() {
   const bot = mineflayer.createBot({
     host: 'AdrsihyaSMP.aternos.me',
-    version: false,
-    username: 'Jiya',
     port: 13981,
+    username: 'JIYA',
+    version: false,
     plugins: [AutoAuth],
-    AutoAuth: 'iloveadarshdick'
+    AutoAuth: 'IamJiya'
   });
 
   bot.loadPlugin(pvp);
   bot.loadPlugin(armorManager);
   bot.loadPlugin(pathfinder);
 
+  // Equip sword and shield after collecting items
   bot.on('playerCollect', (collector, itemDrop) => {
     if (collector !== bot.entity) return;
 
@@ -99,10 +90,6 @@ function createBot() {
       const sword = bot.inventory.items().find(item => item.name.includes('sword'));
       if (sword) bot.equip(sword, 'hand');
     }, 150);
-  });
-
-  bot.on('playerCollect', (collector, itemDrop) => {
-    if (collector !== bot.entity) return;
 
     setTimeout(() => {
       const shield = bot.inventory.items().find(item => item.name.includes('shield'));
@@ -110,14 +97,12 @@ function createBot() {
     }, 250);
   });
 
+  // Guarding logic
   let guardPos = null;
 
   function guardArea(pos) {
     guardPos = pos.clone();
-
-    if (!bot.pvp.target) {
-      moveToGuardPos();
-    }
+    if (!bot.pvp.target) moveToGuardPos();
   }
 
   function stopGuarding() {
@@ -128,51 +113,44 @@ function createBot() {
 
   function moveToGuardPos() {
     const mcData = require('minecraft-data')(bot.version);
-    bot.pathfinder.setMovements(new Movements(bot, mcData));
+    const movements = new Movements(bot, mcData);
+    bot.pathfinder.setMovements(movements);
     bot.pathfinder.setGoal(new goals.GoalBlock(guardPos.x, guardPos.y, guardPos.z));
   }
 
-  bot.on('stoppedAttacking', () => {
-    if (guardPos) {
-      moveToGuardPos();
+  // Bot behavior on specific game ticks
+  bot.on('physicTick', () => {
+    if (guardPos && !bot.pvp.target) {
+      const filter = e => e.type === 'mob' && e.position.distanceTo(bot.entity.position) < 16 && e.mobType !== 'Armor Stand';
+      const entity = bot.nearestEntity(filter);
+      if (entity) {
+        bot.pvp.attack(entity);
+      }
     }
   });
 
-  bot.on('physicTick', () => {
-    if (bot.pvp.target) return;
-    if (bot.pathfinder.isMoving()) return;
-
-    const entity = bot.nearestEntity();
-    if (entity) bot.lookAt(entity.position.offset(0, entity.height, 0));
-  });
-
-  bot.on('physicTick', () => {
-    if (!guardPos) return;
-    const filter = e => e.type === 'mob' && e.position.distanceTo(bot.entity.position) < 16 &&
-      e.mobType !== 'Armor Stand';
-    const entity = bot.nearestEntity(filter);
-    if (entity) {
-      bot.pvp.attack(entity);
-    }
-  });
-
-  
+  // Handle chat messages and direct @JIYA messages
   bot.on('chat', async (username, chatMessage) => {
     if (chatMessage.startsWith('@JIYA')) {
- 
       await handleJIYAMessage(chatMessage, bot);
     } else {
-
       appendChatMessage(username, chatMessage);
     }
   });
 
-  
-
   bot.on('kicked', console.log);
   bot.on('error', console.log);
-  bot.on('end', createBot);
+  bot.on('end', createBot);  // Recreate bot when it disconnects
 }
 
+// Create the bot instance
 createBot();
 
+// Start the Express server
+app.use(express.json());
+
+const server = http.createServer(app);
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
