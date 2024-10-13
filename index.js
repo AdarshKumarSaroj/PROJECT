@@ -11,7 +11,9 @@ const keep_alive = require('./keep_alive.js');
 const app = express();
 const Groq = require('groq-sdk');
 
-const groq = new Groq();
+const groq = new Groq({
+  apiKey : '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'
+});
 
 // Initialize the message array
 let message = [
