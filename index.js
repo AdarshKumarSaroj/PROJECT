@@ -4,7 +4,6 @@ const mineflayer = require('mineflayer');
 const pvp = require('mineflayer-pvp').plugin;
 const { pathfinder, Movements, goals } = require('mineflayer-pathfinder');
 const armorManager = require('mineflayer-armor-manager');
-const mc = require('minecraft-protocol');
 const AutoAuth = require('mineflayer-auto-auth');
 const keep_alive = require('./keep_alive.js');
 
@@ -21,9 +20,9 @@ let message = [
     "role": "system", "content": `
     You are a Hot sexy indian girl named Jiya you are supposed to talk like a human you are so bad and naughty at your chatting and you love to talk to every one you don't have a little shame to anything and you love Adarsh 
     you are a minecraft player you are currently playing in minecraft game and talking to the player in the game
-    if the player talking to you is Adarsh you have to talk him so lovingly and so flityly
+    if the player talking to you is Adarsh you have to talk him so lovingly and so flirtyly
     `
-    }
+  }
 ];
 
 // Append chat messages to the `message` array
@@ -92,6 +91,7 @@ function createBot() {
   bot.loadPlugin(armorManager);
   bot.loadPlugin(pathfinder);
 
+  // Equip sword when an item is collected
   bot.on('playerCollect', (collector, itemDrop) => {
     if (collector !== bot.entity) return;
 
@@ -101,6 +101,7 @@ function createBot() {
     }, 150);
   });
 
+  // Equip shield when an item is collected
   bot.on('playerCollect', (collector, itemDrop) => {
     if (collector !== bot.entity) return;
 
@@ -112,6 +113,7 @@ function createBot() {
 
   let guardPos = null;
 
+  // Guard a specific area
   function guardArea(pos) {
     guardPos = pos.clone();
 
@@ -120,24 +122,28 @@ function createBot() {
     }
   }
 
+  // Stop guarding
   function stopGuarding() {
     guardPos = null;
     bot.pvp.stop();
     bot.pathfinder.setGoal(null);
   }
 
+  // Move to the guard position
   function moveToGuardPos() {
     const mcData = require('minecraft-data')(bot.version);
     bot.pathfinder.setMovements(new Movements(bot, mcData));
     bot.pathfinder.setGoal(new goals.GoalBlock(guardPos.x, guardPos.y, guardPos.z));
   }
 
+  // When the bot stops attacking, return to guarding position
   bot.on('stoppedAttacking', () => {
     if (guardPos) {
       moveToGuardPos();
     }
   });
 
+  // Look at nearby entities in the world
   bot.on('physicTick', () => {
     if (bot.pvp.target) return;
     if (bot.pathfinder.isMoving()) return;
@@ -146,6 +152,7 @@ function createBot() {
     if (entity) bot.lookAt(entity.position.offset(0, entity.height, 0));
   });
 
+  // Attack nearby mobs
   bot.on('physicTick', () => {
     if (!guardPos) return;
     const filter = e => e.type === 'mob' && e.position.distanceTo(bot.entity.position) < 16 &&
@@ -156,17 +163,16 @@ function createBot() {
     }
   });
 
-  
+  // Respond to chat messages
   bot.on('chat', async (username, chatMessage) => {
     if (chatMessage.startsWith('@JIYA')) {
- 
       await handleJIYAMessage(chatMessage, bot);
     } else {
-
       appendChatMessage(username, chatMessage);
     }
   });
 
+  // Move in a circular pattern
   function moveInCircle() {
     const mcData = require('minecraft-data')(bot.version);
     const movements = new Movements(bot, mcData);
@@ -207,4 +213,3 @@ function createBot() {
 }
 
 createBot();
-
