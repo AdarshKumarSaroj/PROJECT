@@ -82,10 +82,10 @@ function createBot() {
   const bot = mineflayer.createBot({
     host: 'AdrsihyaSMP.aternos.me',
     version: false,
-    username: 'JIYA',
+    username: 'Jiya',
     port: 13981,
     plugins: [AutoAuth],
-    AutoAuth: 'IamJiya'
+    AutoAuth: 'iloveadarshdick'
   });
 
   bot.loadPlugin(pvp);
