@@ -19,11 +19,11 @@ const groq = new Groq({
 let message = [
   {
     "role": "system", "content": `
-    You are a Hot sexy indian girl named Jiya you are supposed to talk like a human you are so bad and naughty at your chatting and you love to talk to everyone you don't have a little shame to anything and you love Adarsh.
-    You are a Minecraft player currently playing in the Minecraft game and talking to the player in the game.
-    If the player talking to you is Adarsh, you have to talk to him lovingly and flirtatiously.
+    You are a Hot sexy indian girl named Jiya you are supposed to talk like a human you are so bad and naughty at your chatting and you love to talk to every one you don't have a little shame to anything and you love Adarsh 
+    you are a minecraft player you are currently playing in minecraft game and talking to the player in the game
+    if the player talking to you is Adarsh you have to talk him so lovingly and so flityly
     `
-  }
+    }
 ];
 
 // Append chat messages to the `message` array
@@ -31,7 +31,7 @@ let currentMessageContent = ""; // This will store ongoing chat messages
 
 // Function to handle appending chat messages to the `message` array
 function appendChatMessage(player, chatMessage) {
-  currentMessageContent += `<${player}> ${chatMessage}\n`;  // Append the player name and message
+  currentMessageContent += `< ${player}> ${chatMessage}\n`;  // Append the player name and message
 
   message.push({
     "role": "user",
@@ -128,15 +128,8 @@ function createBot() {
 
   function moveToGuardPos() {
     const mcData = require('minecraft-data')(bot.version);
-    const movements = new Movements(bot, mcData);
-    bot.pathfinder.setMovements(movements);
-
-    // Check if guardPos is defined and valid
-    if (guardPos && guardPos.x !== undefined && guardPos.y !== undefined && guardPos.z !== undefined) {
-      bot.pathfinder.setGoal(new goals.GoalBlock(guardPos.x, guardPos.y, guardPos.z));
-    } else {
-      console.log("Guard position is not valid or defined.");
-    }
+    bot.pathfinder.setMovements(new Movements(bot, mcData));
+    bot.pathfinder.setGoal(new goals.GoalBlock(guardPos.x, guardPos.y, guardPos.z));
   }
 
   bot.on('stoppedAttacking', () => {
@@ -163,47 +156,18 @@ function createBot() {
     }
   });
 
+  
   bot.on('chat', async (username, chatMessage) => {
     if (chatMessage.startsWith('@JIYA')) {
+ 
       await handleJIYAMessage(chatMessage, bot);
     } else {
+
       appendChatMessage(username, chatMessage);
     }
   });
 
-  function moveInCircle() {
-    const mcData = require('minecraft-data')(bot.version);
-    const movements = new Movements(bot, mcData);
-    bot.pathfinder.setMovements(movements);
-
-    const startPosition = bot.entity.position.clone();
-
-    // Define movement offsets for the circular movement
-    const positions = [
-      { x: 3, z: 0 },  // Move 3 blocks right
-      { x: 3, z: 3 },  // Move 3 blocks forward
-      { x: 0, z: 3 },  // Move 3 blocks left
-      { x: 0, z: 0 }   // Move 3 blocks backward (back to start)
-    ];
-
-    let index = 0;
-
-    function moveStep() {
-      const goalPos = startPosition.offset(positions[index].x, 0, positions[index].z);
-      bot.pathfinder.setGoal(new goals.GoalBlock(goalPos.x, goalPos.y, goalPos.z));
-      index = (index + 1) % positions.length; // Move to next position in circle
-
-      // Schedule the next move after 1 minute (60000 milliseconds)
-      setTimeout(moveStep, 60000);
-    }
-
-    moveStep(); // Start the movement loop
-  }
-
-  // Call the circular movement function when the bot spawns
-  bot.once('spawn', () => {
-    moveInCircle();
-  });
+  
 
   bot.on('kicked', console.log);
   bot.on('error', console.log);
@@ -211,3 +175,4 @@ function createBot() {
 }
 
 createBot();
+
