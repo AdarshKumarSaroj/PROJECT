@@ -70,7 +70,7 @@ async function handleJIYAMessage(chatMessage, bot) {
 // Create the Minecraft bot
 function createBot() {
   const bot = mineflayer.createBot({
-    host: 'AdrsihyaSMP.aternos.me',
+    host: 'Adrsihya__SMP.aternos.me',
     port: 13981,
     username: 'JIYA',
     version: false,
